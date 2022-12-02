@@ -6,9 +6,16 @@ var nodePath = require('path');
 var utils = require('./utils');
 var cssFontParser = require('css-font-parser');
 
-var KEYWORDS = ['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'initial', 'inherit'];
+var KEYWORDS = [
+  'serif',
+  'sans-serif',
+  'monospace',
+  'cursive',
+  'fantasy',
+  'initial',
+  'inherit',
+];
 var RE_QUOTATION = /(?:^"|"$)|(?:^'|'$)/g;
-
 
 /**
  * WebFont 描述类
@@ -27,20 +34,17 @@ function WebFont(options) {
     this.elements = options.elements || [];
 }
 
-
 /**
  * 解析 @font-face
  * @param   {CSSFontFaceRule}
  * @return  {WebFont, null}
  */
 WebFont.parse = function parseFontFace(cssFontFaceRule) {
-
     var ruleStyle = cssFontFaceRule.style;
     var parentStyleSheet = cssFontFaceRule.parentStyleSheet;
 
     // <link> || <style>
     var baseURI = parentStyleSheet.href || parentStyleSheet.ownerNode.baseURI;
-
 
     var family = ruleStyle['font-family'];
     var stretch = ruleStyle['font-stretch'];
@@ -54,11 +58,9 @@ WebFont.parse = function parseFontFace(cssFontFaceRule) {
     var src = ruleStyle.src;
     var files = WebFont.getFiles(src, baseURI);
 
-
     if (!files.length) {
         return null;
     }
-
 
     family = family.replace(RE_QUOTATION, '');
 
@@ -73,16 +75,12 @@ WebFont.parse = function parseFontFace(cssFontFaceRule) {
         files: files,
         stretch: stretch,
         style: style,
-        weight: weight
+    weight: weight,
     });
 };
 
-
 WebFont.prototype = {
-
-
     constructor: WebFont,
-
 
     /**
      * 匹配 CSS 规则
@@ -90,8 +88,7 @@ WebFont.prototype = {
      * @param   {CSSStyleDeclaration}
      * @return  {Boolean}
      */
-    matchStyle: function(style) {
-
+  matchStyle: function (style) {
         var fontFamilys = WebFont.getComputedFontFamilys(style);
 
         // 虽然仅使用字体名称来匹配会可能产生冗余，但比较安全
@@ -99,14 +96,12 @@ WebFont.prototype = {
         return fontFamilys.indexOf('"' + this.family + '"') !== -1;
     },
 
-
-
     /**
      * 匹配元素节点
      * @param   {HTMLElement}
      * @return  {Boolean}
      */
-    matchElement: function(element) {
+  matchElement: function (element) {
         var elements = this.elements;
 
         if (!elements || !elements.length) {
@@ -123,45 +118,41 @@ WebFont.prototype = {
         return false;
     },
 
-
     /**
      * 添加字符
      * @param   {String}
      */
-    addChar: function(char) {
+  addChar: function (char) {
         if (this.chars.indexOf(char) === -1) {
             this.chars += char;
         }
     },
 
-
     /**
      * 添加选择器
      * @param   {String}
      */
-    addSelector: function(selector) {
+  addSelector: function (selector) {
         if (this.selectors.indexOf(selector) === -1) {
             this.selectors.push(selector);
         }
     },
 
-
     /**
      * 添加元素
      * @param   {String}
      */
-    addElement: function(element) {
+  addElement: function (element) {
         if (this.elements.indexOf(element) === -1) {
             this.elements.push(element);
         }
     },
 
-
     /**
      * 转换为数据
      * @return   {Object}
      */
-    toData: function() {
+  toData: function () {
         return {
             id: this.id,
             family: this.family,
@@ -170,13 +161,10 @@ WebFont.prototype = {
             style: this.style,
             weight: this.weight,
             chars: this.chars,
-            selectors: this.selectors
+      selectors: this.selectors,
         };
-    }
-
+  },
 };
-
-
 
 /**
  * 获取当前 CSSStyleDeclaration 计算后的 font-family
@@ -184,7 +172,7 @@ WebFont.prototype = {
  * @param   {CSSStyleDeclaration}
  * @return  {Array<String>}
  */
-WebFont.getComputedFontFamilys = function(style) {
+WebFont.getComputedFontFamilys = function (style) {
     if (!style['font-family'] && !style.font) {
         return [];
     }
@@ -207,7 +195,6 @@ WebFont.getComputedFontFamilys = function(style) {
         }
     }
 
-
     function setFontFamilys(key, value) {
         var propertyPriority = style.getPropertyPriority(key);
         if (propertyPriority || !important || !fontFamilys) {
@@ -216,7 +203,6 @@ WebFont.getComputedFontFamilys = function(style) {
         important = propertyPriority;
     }
 
-
     if (!fontFamilys || fontFamilys[0] === 'inherit') {
         fontFamilys = [];
     }
@@ -224,14 +210,13 @@ WebFont.getComputedFontFamilys = function(style) {
     return fontFamilys;
 };
 
-
 /**
  * 标准化 font-family 值，给非关键字都加上双引号
  * @param   {String}    font-family
  * @return  {Array<String>}
  */
-WebFont.getFontFamilys = function(input) {
-    return WebFont.split(input).map(function(fontFamily) {
+WebFont.getFontFamilys = function (input) {
+  return WebFont.split(input).map(function (fontFamily) {
         if (KEYWORDS.indexOf(fontFamily) !== -1) {
             return fontFamily;
         } else {
@@ -240,18 +225,16 @@ WebFont.getFontFamilys = function(input) {
     });
 };
 
-
 /**
  * 按逗号切割 font-family 值
  * @param   {String}    font-family
  * @return  {Array<String>}
  */
-WebFont.split = function(fontFamily) {
-    return utils.split(fontFamily).map(function(fontFamily) {
+WebFont.split = function (fontFamily) {
+  return utils.split(fontFamily).map(function (fontFamily) {
         return fontFamily.trim();
     });
 };
-
 
 /**
  * 解析 @font-face src 值
@@ -259,11 +242,11 @@ WebFont.split = function(fontFamily) {
  * @param   {String}    基础路径
  * @param   {Array<WebFont.File>}
  */
-WebFont.getFiles = function(input, baseURI) {
+WebFont.getFiles = function (input, baseURI) {
     var list = [];
     var src;
 
-    var RE_FONT_URL = /url\(("|')?(.*?)\1?\)(?:\s*format\(("|')?(.*?)\3?\))?/ig;
+  var RE_FONT_URL = /url\(("|')?(.*?)\1?\)(?:\s*format\(("|')?(.*?)\3?\))?/gi;
 
     RE_FONT_URL.lastIndex = 0;
 
@@ -274,15 +257,13 @@ WebFont.getFiles = function(input, baseURI) {
     return list;
 };
 
-
 /**
  * font-face 路径描述信息类
  * @param   {String}    地址
  * @param   {String}    格式
  * @param   {String}    基础路径
  */
-WebFont.File = function(url, format, baseURI) {
-
+WebFont.File = function (url, format, baseURI) {
     var RE_SERVER = /^https?\:\/\//i;
 
     if (!RE_SERVER.test(url)) {
@@ -324,9 +305,8 @@ WebFont.File = function(url, format, baseURI) {
     this.format = format;
 };
 
-WebFont.File.prototype.toString = function() {
+WebFont.File.prototype.toString = function () {
     return this.url;
 };
-
 
 module.exports = WebFont;

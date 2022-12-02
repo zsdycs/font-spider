@@ -4,7 +4,6 @@ var path = require('path');
 var RE_SEP = new RegExp('\\' + path.sep, 'g');
 
 function Adapter(options) {
-
     options = options || {};
 
     if (options instanceof Adapter) {
@@ -17,7 +16,6 @@ function Adapter(options) {
 }
 
 Adapter.prototype = {
-
     constructor: Adapter,
 
     /**
@@ -106,7 +104,7 @@ Adapter.prototype = {
      * @param   {String}    旧文件地址
      * @return  {String}    新文件地址
      */
-    resourceMap: function(file) {
+  resourceMap: function (file) {
         var map = this.map;
 
         if (!map || map.length === 0) {
@@ -122,7 +120,8 @@ Adapter.prototype = {
      * @param   {String}    文件地址
      * @return  {Boolean}   如果返回 `true` 则忽略当当前文件的加载
      */
-    resourceIgnore: function(file) { // jshint ignore:line
+  resourceIgnore: function (file) {
+    // jshint ignore:line
         var ignore = this.ignore;
         if (!ignore || ignore.length === 0) {
             return false;
@@ -136,7 +135,8 @@ Adapter.prototype = {
      * 资源加载前的事件
      * @param   {String}    文件地址
      */
-    resourceBeforeLoad: function(file) { // jshint ignore:line
+  resourceBeforeLoad: function (file) {
+    // jshint ignore:line
     },
 
     /**
@@ -144,13 +144,19 @@ Adapter.prototype = {
      * @param   {String}    文件地址
      * @return  {Object}
      */
-    resourceRequestHeaders: function(file) { // jshint ignore:line
+  resourceRequestHeaders: function (file) {
+    // jshint ignore:line
         return {
-            'accept-encoding': 'gzip,deflate'
+      'accept-encoding': 'gzip,deflate',
         };
-    }
-};
+  },
 
+  /**
+   * 是否加载外部 FontFaceRule
+   * @type    {Array}
+   */
+  extraFontFaceRule: [],
+};
 
 /**
  * 映射器工厂
@@ -158,9 +164,8 @@ Adapter.prototype = {
  * @return  {Function}
  */
 function mapFactory(params) {
-
     var regs = [];
-    (params || []).forEach(function(params) {
+  (params || []).forEach(function (params) {
         if (typeof params[0] === 'string') {
             params[0] = new RegExp(params[0], 'g');
         }
@@ -169,26 +174,24 @@ function mapFactory(params) {
 
     // @param   {String}
     // @param   {String}
-    return regs.length ? function map(src) {
-
+  return regs.length
+    ? function map(src) {
         if (!src) {
             return src;
         }
 
         src = src.replace(RE_SEP, '/'); // windows path
 
-        regs.forEach(function(reg) {
+        regs.forEach(function (reg) {
             src = src.replace.apply(src, reg);
         });
 
         return src;
-
-    } : function(src) {
+      }
+    : function (src) {
         return src;
     };
 }
-
-
 
 /**
  * 忽略器工厂
@@ -196,8 +199,7 @@ function mapFactory(params) {
  * @return  {Function}
  */
 function ignoreFactory(ignoreList) {
-
-    ignoreList = ignoreList.map(function(item) {
+  ignoreList = ignoreList.map(function (item) {
         if (typeof item === 'string') {
             item = new RegExp(item, 'g');
         }
@@ -207,8 +209,8 @@ function ignoreFactory(ignoreList) {
 
     // @param   {String}
     // @return  {Boolean}
-    return ignoreList.length ? function(src) {
-
+  return ignoreList.length
+    ? function (src) {
         if (!src) {
             return false;
         }
@@ -224,11 +226,10 @@ function ignoreFactory(ignoreList) {
         }
 
         return false;
-
-    } : function() {
+      }
+    : function () {
         return false;
     };
 }
-
 
 module.exports = Adapter;

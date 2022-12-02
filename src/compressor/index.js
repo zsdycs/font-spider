@@ -3,31 +3,27 @@
 var fs = require('fs');
 var path = require('path');
 var gulp = require('gulp');
-var Fontmin = require('fontmin');
+var Fontmin = require('../../fontmin/index');
 var Adapter = require('../adapter');
 var rename = require('gulp-rename');
-
 
 // http://font-spider.org/css/style.css
 // var RE_SERVER = /^(\/|http\:|https\:)/i;
 var RE_SERVER = /^https?\:/i;
 
-
 function Compress(webFont, options) {
     options = new Adapter(options);
-    return new Promise(function(resolve, reject) {
-
+  return new Promise(
+    function (resolve, reject) {
         if (webFont.length === 0) {
             resolve(webFont);
             return;
         }
 
-
         var sources = {};
         var sourceFormat = ['truetype', 'opentype'];
 
-
-        webFont.files.forEach(function(file) {
+      webFont.files.forEach(function (file) {
             if (RE_SERVER.test(file.url)) {
                 throw new Error('does not support remote path "' + file.url + '"');
             }
@@ -37,28 +33,29 @@ function Compress(webFont, options) {
             }
         });
 
-
-
         this.source = sources.truetype || sources.opentype;
         this.webFont = webFont;
         this.options = options;
 
-
         if (!this.source) {
-            throw new Error('"' + webFont.family + '"' + ' did not find truetype or opentype fonts');
+        throw new Error(
+          '"' +
+            webFont.family +
+            '"' +
+            ' did not find truetype or opentype fonts',
+        );
         }
 
-
         // 备份字体与恢复备份
-        this.backup(function(errors) {
+      this.backup(
+        function (errors) {
             if (errors) {
                 done(errors);
             } else {
                 this.min(done);
             }
-        }.bind(this));
-
-
+        }.bind(this),
+      );
 
         function done(errors, webFont) {
             if (errors) {
@@ -67,25 +64,19 @@ function Compress(webFont, options) {
                 resolve(webFont);
             }
         }
-
-
-    }.bind(this));
+    }.bind(this),
+  );
 }
 
-
 Compress.defaults = {
-    backup: true
+  backup: true,
 };
-
 
 Compress.prototype = {
     constructor: Compress,
 
-
     // 字体恢复与备份
-    backup: function(callback) {
-
-
+  backup: function (callback) {
         if (!this.options.backup) {
             return callback();
         }
@@ -95,7 +86,6 @@ Compress.prototype = {
         var basename = path.basename(source.url);
         var backupDir = path.join(dirname, '.font-spider');
         var backupFile = path.join(backupDir, basename);
-
 
         if (!fs.existsSync(backupFile)) {
             // version < 1.3.0
@@ -110,16 +100,17 @@ Compress.prototype = {
             return gulp.src(backupFile).pipe(gulp.dest(dirname)).on('end', callback);
         } else {
             // 备份文件
-            return gulp.src(source.url).pipe(gulp.dest(backupDir)).on('end', callback);
+      return gulp
+        .src(source.url)
+        .pipe(gulp.dest(backupDir))
+        .on('end', callback);
         }
     },
 
-    min: function(callback) {
-
+  min: function (callback) {
         var webFont = this.webFont;
         var source = this.source;
         var dirname = path.dirname(source.url);
-
 
         if (!fs.existsSync(source.url)) {
             return callback(new Error('"' + source.url + '" file not found'));
@@ -130,24 +121,23 @@ Compress.prototype = {
         var paths = {};
         var types = {
             'embedded-opentype': 'ttf2eot',
-            'woff': 'ttf2woff',
-            'woff2': 'ttf2woff2',
-            'svg': 'ttf2svg'
+      woff: 'ttf2woff',
+      woff2: 'ttf2woff2',
+      svg: 'ttf2svg',
         };
 
-
-        fontmin.use(Fontmin.glyph({
+    fontmin.use(
+      Fontmin.glyph({
             trim: false,
-            text: webFont.chars || '#' // 传入任意字符避免 fontmin@0.9.5 BUG
-        }));
-
+        text: webFont.chars || '#', // 传入任意字符避免 fontmin@0.9.5 BUG
+      }),
+    );
 
         if (source.format === 'opentype') {
             fontmin.use(Fontmin.otf2ttf());
         }
 
-
-        webFont.files.forEach(function(file) {
+    webFont.files.forEach(function (file) {
             var format = file.format;
             var fn = types[format];
             var extname = path.extname(file.url);
@@ -158,7 +148,7 @@ Compress.prototype = {
                 file: file,
                 dirname: path.dirname(relative),
                 basename: basename,
-                extname: extname
+        extname: extname,
             };
 
             if (format === source.format) {
@@ -166,33 +156,43 @@ Compress.prototype = {
             }
 
             if (typeof Fontmin[fn] === 'function') {
-                fontmin.use(Fontmin[fn]({
-                    clone: true
-                }));
+        fontmin.use(
+          Fontmin[fn]({
+            clone: true,
+          }),
+        );
             } else {
-                throw new TypeError('compressing the ' + format + ' format fonts is not supported, ' +
-                    'please delete it in the CSS file: "' + file.url + '"');
+        throw new TypeError(
+          'compressing the ' +
+            format +
+            ' format fonts is not supported, ' +
+            'please delete it in the CSS file: "' +
+            file.url +
+            '"',
+        );
             }
         });
 
-
-        fontmin.use(rename(function(path) {
+    fontmin.use(
+      rename(function (path) {
             var newName = paths[path.extname];
+        if (newName) {
             path.dirname = newName.dirname;
             path.basename = newName.basename;
             path.extname = newName.extname;
-        }));
-
+        }
+      }),
+    );
 
         fontmin.dest(dirname);
-        fontmin.run(function(errors, buffer) {
-
+    fontmin.run(function (errors, buffer) {
             if (errors) {
                 callback(errors);
             } else {
-
-                buffer.forEach(function(buffer) {
+        buffer.forEach(function (buffer) {
+          if (paths[buffer.extname]) {
                     paths[buffer.extname].file.size = buffer.contents.length;
+          }
                 });
 
                 // 添加新字段：记录原始文件大小
@@ -201,10 +201,8 @@ Compress.prototype = {
                 callback(null, webFont);
             }
         });
-    }
-
+  },
 };
-
 
 /**
  * 压缩字体
@@ -213,26 +211,29 @@ Compress.prototype = {
  * @param   {Function}          回调函数
  * @return  {Promise}           如果没有 `callback` 参数则返回 `Promise` 对象
  */
-module.exports = function(webFonts, adapter, callback) {
+module.exports = function (webFonts, adapter, callback) {
     adapter = new Adapter(adapter);
 
     if (!Array.isArray(webFonts)) {
         webFonts = [webFonts];
     }
 
-    webFonts = Promise.all(webFonts.map(function(webFont) {
+  webFonts = Promise.all(
+    webFonts.map(function (webFont) {
         return new Compress(webFont, adapter);
-    }));
-
+    }),
+  );
 
     if (typeof callback === 'function') {
-        webFonts.then(function(webFonts) {
-            process.nextTick(function() {
+    webFonts
+      .then(function (webFonts) {
+        process.nextTick(function () {
                 callback(null, webFonts);
             });
             return webFonts;
-        }).catch(function(errors) {
-            process.nextTick(function() {
+      })
+      .catch(function (errors) {
+        process.nextTick(function () {
                 callback(errors);
             });
             return Promise.reject(errors);
@@ -240,5 +241,4 @@ module.exports = function(webFonts, adapter, callback) {
     } else {
         return webFonts;
     }
-
 };

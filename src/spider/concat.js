@@ -1,6 +1,5 @@
 'use strict';
 
-
 /**
  * 合并相同 webFont 的字符、选择器数据
  * @param   {Array<Array<WebFont>>}
@@ -8,18 +7,15 @@
  * @return  {Array<WebFont>}
  */
 function concat(webFonts, adapter) {
-
     if (Array.isArray(webFonts[0])) {
         webFonts = reduce(webFonts);
     }
 
-
     var newWebFonts = [];
     var indexs = {};
 
-
     // 合并相同 font-face
-    webFonts.forEach(function(webFont) {
+  webFonts.forEach(function (webFont) {
         var id = webFont.id;
         if (typeof indexs[id] === 'number') {
             var item = newWebFonts[indexs[id]];
@@ -31,9 +27,7 @@ function concat(webFonts, adapter) {
         }
     });
 
-
-    newWebFonts.forEach(function(webFont) {
-
+  newWebFonts.forEach(function (webFont) {
         var chars = Array.from(webFont.chars);
 
         // 对字符进行除重操作
@@ -55,7 +49,7 @@ function concat(webFonts, adapter) {
         webFont.selectors = unique(webFont.selectors);
 
         // 处理路径
-        webFont.files = webFont.files.filter(function(file) {
+    webFont.files = webFont.files.filter(function (file) {
             var ignore = adapter.resourceIgnore(file.url);
 
             if (!ignore) {
@@ -71,31 +65,25 @@ function concat(webFonts, adapter) {
     return newWebFonts;
 }
 
-
-
 // 扁平化二维数组
 function reduce(array) {
     var ret = [];
 
-    array.forEach(function(item) {
+  array.forEach(function (item) {
         ret.push.apply(ret, item);
     });
 
     return ret;
 }
 
-
-
 function sort(a, b) {
     return a.charCodeAt() - b.charCodeAt();
 }
 
-
-
 function unique(array) {
     var ret = [];
 
-    array.forEach(function(val) {
+  array.forEach(function (val) {
         if (ret.indexOf(val) === -1) {
             ret.push(val);
         }
@@ -103,6 +91,5 @@ function unique(array) {
 
     return ret;
 }
-
 
 module.exports = concat;
